@@ -8,17 +8,6 @@ export function uuid() {
   });
 }
 
-export function formatCurrency(amount, currency) {
-  const cur = currency || '€';
-  const val = (Math.round((amount + Number.EPSILON) * 100) / 100).toFixed(2).replace('.', ',');
-  return `${val} ${cur}`;
-}
-
-export function parseGermanNumber(str) {
-  if (typeof str !== 'string') return Number(str) || 0;
-  return parseFloat(str.replace(',', '.')) || 0;
-}
-
 export function formatDate(ts) {
   const d = new Date(ts);
   return d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }) +

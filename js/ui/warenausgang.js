@@ -6,6 +6,7 @@ const controller = createStockFormController({
   containerId: 'warenausgang-body',
   addRowBtnId: 'warenausgang-add-row',
   submitBtnId: 'warenausgang-submit',
+  scanBtnId: 'warenausgang-scan',
   movementType: 'out',
   actionLabel: 'Warenausgang',
 });

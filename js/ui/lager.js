@@ -1,7 +1,8 @@
 'use strict';
 
 import { state } from '../state.js';
-import { formatCurrency, escapeHtml, debounce } from '../utils.js';
+import { escapeHtml, debounce } from '../utils.js';
+import { formatCurrency } from '../currency.js';
 import { openSubView } from '../router.js';
 import { stockLevelClass } from './produkte.js';
 
@@ -64,7 +65,7 @@ function renderList() {
       <div class="product-list-swatch" style="${product.imageBase64 ? `background-image:url(${product.imageBase64})` : `background-color:${product.color}`}"></div>
       <div class="product-list-info">
         <div class="product-list-name">${escapeHtml(product.name)}</div>
-        <div class="product-list-meta">${formatCurrency(product.price, state.settings.currency)} · ${escapeHtml(product.category)}</div>
+        <div class="product-list-meta">${formatCurrency(product.price, state.settings.currencyCode)} · ${escapeHtml(product.category)}</div>
       </div>
       ${badge}
     `;

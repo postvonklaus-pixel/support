@@ -1,25 +1,58 @@
 'use strict';
 
-import { state, saveSettings, recalcStockFromMovements, exportAll, importAll, wipeAll } from '../state.js';
-import { toast, confirmDialog, sha256Hex } from '../utils.js';
+import { state, saveSettings, recalcStockFromMovements, exportAll, importAll, wipeAll, getCurrencyMigrationDone, convertPricesEurToIdr } from '../state.js';
+import { toast, confirmDialog, sha256Hex, openModal, closeModal } from '../utils.js';
+import { formatCurrency, roundToStep, CURRENCY_LABELS } from '../currency.js';
 import { verifyPin, setPinHash, showOnboardingForReload } from './pin.js';
 
-export function render() {
+export async function render() {
   document.getElementById('setting-business-name').value = state.settings.shopName;
-  document.getElementById('setting-currency').value = state.settings.currency;
+  document.getElementById('setting-currency-select').value = state.settings.currencyCode;
   document.getElementById('setting-inventory-enabled').checked = !!state.settings.inventoryEnabled;
+  document.getElementById('setting-scanner-sound').checked = !!state.settings.scannerSoundEnabled;
+  document.getElementById('setting-scanner-vibration').checked = !!state.settings.scannerVibrationEnabled;
+  document.getElementById('setting-scanner-mode-kasse').value = state.settings.scannerModeKasse;
+
+  const migrationDone = await getCurrencyMigrationDone();
+  const alreadyIdr = state.settings.currencyCode === 'IDR';
+  const convertBtn = document.getElementById('btn-convert-prices');
+  const hintEl = document.getElementById('convert-prices-hint');
+  convertBtn.disabled = migrationDone || alreadyIdr;
+  hintEl.hidden = !(migrationDone || alreadyIdr);
+  hintEl.textContent = migrationDone
+    ? 'Preis-Migration bereits durchgeführt.'
+    : 'Währung ist bereits IDR – nichts umzurechnen.';
 }
 
 document.getElementById('setting-business-name').addEventListener('change', async (e) => {
   await saveSettings({ shopName: e.target.value.trim() || 'Meine Kasse' });
   toast('Gespeichert');
 });
-document.getElementById('setting-currency').addEventListener('change', async (e) => {
-  await saveSettings({ currency: e.target.value.trim() || '€' });
+document.getElementById('setting-currency-select').addEventListener('change', async (e) => {
+  const newCode = e.target.value;
+  const previousCode = state.settings.currencyCode;
+  if (newCode === previousCode) return;
+  const ok = await confirmDialog(
+    `Währung wird auf ${CURRENCY_LABELS[newCode]} umgestellt. Bestehende Preise werden NICHT umgerechnet, nur neu formatiert. Fortfahren?`
+  );
+  if (!ok) { e.target.value = previousCode; return; }
+  await saveSettings({ currencyCode: newCode });
   toast('Gespeichert');
 });
 document.getElementById('setting-inventory-enabled').addEventListener('change', async (e) => {
   await saveSettings({ inventoryEnabled: e.target.checked });
+  toast('Gespeichert');
+});
+document.getElementById('setting-scanner-sound').addEventListener('change', async (e) => {
+  await saveSettings({ scannerSoundEnabled: e.target.checked });
+  toast('Gespeichert');
+});
+document.getElementById('setting-scanner-vibration').addEventListener('change', async (e) => {
+  await saveSettings({ scannerVibrationEnabled: e.target.checked });
+  toast('Gespeichert');
+});
+document.getElementById('setting-scanner-mode-kasse').addEventListener('change', async (e) => {
+  await saveSettings({ scannerModeKasse: e.target.value });
   toast('Gespeichert');
 });
 
@@ -42,7 +75,7 @@ document.getElementById('btn-recalc-stock').addEventListener('click', async () =
   toast(fixed > 0 ? `${fixed} Produkt(e) korrigiert` : 'Alle Bestände waren konsistent');
 });
 
-document.getElementById('btn-export').addEventListener('click', async () => {
+async function downloadExport() {
   const data = await exportAll();
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
@@ -53,6 +86,10 @@ document.getElementById('btn-export').addEventListener('click', async () => {
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+
+document.getElementById('btn-export').addEventListener('click', async () => {
+  await downloadExport();
   toast('Export erstellt');
 });
 
@@ -89,4 +126,54 @@ document.getElementById('btn-delete-all').addEventListener('click', async () => 
   await wipeAll();
   toast('Alle Daten gelöscht');
   setTimeout(() => location.reload(), 600);
+});
+
+/* ---------------- Preis-Migration EUR -> IDR ---------------- */
+
+document.getElementById('btn-convert-prices').addEventListener('click', () => {
+  document.getElementById('convert-factor').value = 16000;
+  document.getElementById('convert-rounding').value = '1000';
+  renderConvertPreview();
+  openModal('modal-convert-prices');
+});
+
+document.getElementById('convert-factor').addEventListener('input', renderConvertPreview);
+document.getElementById('convert-rounding').addEventListener('change', renderConvertPreview);
+
+function renderConvertPreview() {
+  const factor = parseFloat(document.getElementById('convert-factor').value) || 0;
+  const roundTo = parseInt(document.getElementById('convert-rounding').value, 10) || 0;
+  const previewEl = document.getElementById('convert-preview');
+
+  const sample = state.products.slice(0, 3);
+  if (sample.length === 0) {
+    previewEl.innerHTML = '<p class="product-list-empty">Keine Produkte vorhanden.</p>';
+    return;
+  }
+  previewEl.innerHTML = `<p class="convert-preview-title">Vorschau (${state.products.length} Produkt(e) betroffen):</p>` +
+    sample.map((p) => {
+      const converted = roundToStep(p.price * factor, roundTo);
+      return `<div class="convert-preview-row">
+        <span>${p.name}</span>
+        <span>${formatCurrency(p.price, 'EUR')} → ${formatCurrency(converted, 'IDR')}</span>
+      </div>`;
+    }).join('');
+}
+
+document.getElementById('btn-convert-confirm').addEventListener('click', async () => {
+  const factor = parseFloat(document.getElementById('convert-factor').value);
+  const roundTo = parseInt(document.getElementById('convert-rounding').value, 10) || 0;
+  if (!factor || factor <= 0) { toast('Bitte einen gültigen Umrechnungsfaktor eingeben'); return; }
+
+  const ok = await confirmDialog(
+    `${state.products.length} Produktpreise werden mit Faktor ${factor} umgerechnet. Diese Aktion kann nicht rückgängig gemacht werden. ` +
+    `Backup wird automatisch heruntergeladen. Bereits erfasste Verkäufe behalten ihren ursprünglichen EUR-Betrag, werden ab jetzt aber mit dem IDR-Format angezeigt. Fortfahren?`
+  );
+  if (!ok) return;
+
+  await downloadExport();
+  const count = await convertPricesEurToIdr({ factor, roundTo });
+  closeModal('modal-convert-prices');
+  toast(`${count} Produkt(e) umgerechnet. Verkaufshistorie bleibt in EUR.`);
+  render();
 });

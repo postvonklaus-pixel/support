@@ -1,7 +1,7 @@
 'use strict';
 
 import { state } from '../state.js';
-import { formatCurrency, formatDate, escapeHtml, startOfDay, rangeForPeriod } from '../utils.js';
+import { formatDate, escapeHtml, startOfDay, rangeForPeriod } from '../utils.js';
 import { openSubView } from '../router.js';
 import { openProductModal } from './produkte.js';
 import { presetProduct as presetWareneingang } from './wareneingang.js';

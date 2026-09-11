@@ -1,7 +1,8 @@
 'use strict';
 
 import { state, getCategories, addToCart, changeCartQty, removeFromCart, cartTotal, recordSale, clearCart } from '../state.js';
-import { formatCurrency, escapeHtml, vibrate, toast, openModal, closeModal, parseGermanNumber } from '../utils.js';
+import { escapeHtml, vibrate, toast, openModal, closeModal } from '../utils.js';
+import { formatCurrency, parseAmountInput, applyAmountInputAttrs, getQuickCashSteps } from '../currency.js';
 
 let checkoutMethod = null;
 
@@ -49,7 +50,7 @@ function renderProductGrid() {
     const inCart = state.cart.find((c) => c.productId === product.id);
     btn.innerHTML = `
       <span class="p-name">${escapeHtml(product.name)}</span>
-      <span class="p-price">${formatCurrency(product.price, state.settings.currency)}</span>
+      <span class="p-price">${formatCurrency(product.price, state.settings.currencyCode)}</span>
       ${soldOut ? '<span class="p-soldout-label">Ausverkauft</span>' : ''}
       ${critical ? '<span class="p-warning">⚠️</span>' : ''}
       ${inCart ? `<span class="p-badge">${inCart.quantity}</span>` : ''}
@@ -74,7 +75,7 @@ function renderCart() {
 
   const totalQty = state.cart.reduce((s, c) => s + c.quantity, 0);
   countEl.textContent = `${totalQty} Artikel`;
-  totalEl.textContent = formatCurrency(cartTotal(), state.settings.currency);
+  totalEl.textContent = formatCurrency(cartTotal(), state.settings.currencyCode);
   payBtn.disabled = state.cart.length === 0;
 
   if (state.cart.length === 0) {
@@ -88,7 +89,7 @@ function renderCart() {
     row.innerHTML = `
       <div class="cart-item-info">
         <div class="cart-item-name">${escapeHtml(item.name)}</div>
-        <div class="cart-item-price">${formatCurrency(item.price, state.settings.currency)} · ${formatCurrency(item.price * item.quantity, state.settings.currency)}</div>
+        <div class="cart-item-price">${formatCurrency(item.price, state.settings.currencyCode)} · ${formatCurrency(item.price * item.quantity, state.settings.currencyCode)}</div>
       </div>
       <div class="qty-control">
         <button type="button" class="qty-btn" data-action="dec">−</button>
@@ -115,11 +116,13 @@ document.getElementById('btn-pay').addEventListener('click', openCheckout);
 function openCheckout() {
   if (state.cart.length === 0) return;
   checkoutMethod = null;
-  document.getElementById('checkout-total-value').textContent = formatCurrency(cartTotal(), state.settings.currency);
+  document.getElementById('checkout-total-value').textContent = formatCurrency(cartTotal(), state.settings.currencyCode);
   document.querySelectorAll('.payment-method').forEach((b) => b.classList.remove('selected'));
   document.getElementById('cash-input-wrap').hidden = true;
-  document.getElementById('cash-given').value = '';
-  document.getElementById('change-value').textContent = formatCurrency(0, state.settings.currency);
+  const cashInput = document.getElementById('cash-given');
+  cashInput.value = '';
+  applyAmountInputAttrs(cashInput, state.settings.currencyCode);
+  document.getElementById('change-value').textContent = formatCurrency(0, state.settings.currencyCode);
   document.getElementById('btn-confirm-pay').disabled = true;
   renderQuickCash();
   openModal('modal-checkout');
@@ -129,12 +132,13 @@ function renderQuickCash() {
   const total = cartTotal();
   const wrap = document.getElementById('quick-cash');
   wrap.innerHTML = '';
-  const suggestions = new Set([Math.ceil(total), Math.ceil(total / 5) * 5, Math.ceil(total / 10) * 10, Math.ceil(total / 20) * 20]);
+  const steps = getQuickCashSteps(state.settings.currencyCode);
+  const suggestions = new Set(steps.map((step) => Math.ceil(total / step) * step));
   [...suggestions].filter((v) => v > 0).sort((a, b) => a - b).slice(0, 4).forEach((v) => {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'quick-cash-btn';
-    btn.textContent = formatCurrency(v, state.settings.currency);
+    btn.textContent = formatCurrency(v, state.settings.currencyCode);
     btn.addEventListener('click', () => {
       document.getElementById('cash-given').value = v;
       updateChange();
@@ -160,9 +164,9 @@ document.getElementById('payment-methods').addEventListener('click', (e) => {
 
 function updateChange() {
   const total = cartTotal();
-  const given = parseGermanNumber(document.getElementById('cash-given').value);
+  const given = parseAmountInput(document.getElementById('cash-given').value, state.settings.currencyCode);
   const change = given - total;
-  document.getElementById('change-value').textContent = formatCurrency(Math.max(change, 0), state.settings.currency);
+  document.getElementById('change-value').textContent = formatCurrency(Math.max(change, 0), state.settings.currencyCode);
   document.getElementById('btn-confirm-pay').disabled = !(checkoutMethod === 'cash' && given >= total);
 }
 document.getElementById('cash-given').addEventListener('input', updateChange);
@@ -172,7 +176,7 @@ document.getElementById('btn-confirm-pay').addEventListener('click', async () =>
   const total = cartTotal();
   let amountGiven;
   if (checkoutMethod === 'cash') {
-    amountGiven = parseGermanNumber(document.getElementById('cash-given').value);
+    amountGiven = parseAmountInput(document.getElementById('cash-given').value, state.settings.currencyCode);
     if (amountGiven < total) return;
   }
   try {

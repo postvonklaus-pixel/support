@@ -3,6 +3,7 @@
 import { state, addMovement } from '../state.js';
 import { escapeHtml, toast, confirmDialog, vibrate } from '../utils.js';
 import { closeSubView } from '../router.js';
+import { openScanner } from '../barcode.js';
 
 let counts = {}; // productId -> { counted, note }
 
@@ -49,6 +50,23 @@ function renderList(products) {
     listEl.appendChild(row);
   });
 }
+
+document.getElementById('inventur-scan').addEventListener('click', () => {
+  openScanner((code) => {
+    const product = state.products.find((p) => p.trackStock && (p.barcode === code || p.id === code));
+    if (!product) return { success: false, message: `Nicht gefunden: ${code}` };
+    const row = Array.from(document.querySelectorAll('.inventur-row')).find((el) => el.dataset.productId === product.id);
+    if (!row) return { success: false, message: `${product.name}: keine Bestandsverfolgung` };
+
+    row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    row.classList.add('inventur-row-highlight');
+    setTimeout(() => row.classList.remove('inventur-row-highlight'), 1000);
+    const input = row.querySelector('.inventur-row-count');
+    input.focus();
+    input.select();
+    return { success: true, message: product.name };
+  }, { mode: 'continuous' });
+});
 
 document.getElementById('inventur-submit').addEventListener('click', async () => {
   const changed = state.products

@@ -12,7 +12,7 @@ const OLD_KEYS = {
 };
 
 const PAYMENT_MAP = { bar: 'cash', karte: 'card', sonstiges: 'other' };
-const CURRENT_DATA_VERSION = 3;
+const CURRENT_DATA_VERSION = 4;
 
 function readOldJson(key) {
   try {
@@ -63,7 +63,11 @@ function migrateSale(old) {
 function migrateSettings(old) {
   return {
     shopName: old?.businessName || 'Meine Kasse',
-    currency: old?.currency || '€',
+    // Legacy installs only ever entered prices as plain numbers with a
+    // free-text currency symbol - there is no reliable way to infer IDR
+    // from that, so they always land on EUR and can convert explicitly
+    // via "Alle Preise EUR -> IDR umrechnen" in Einstellungen.
+    currencyCode: 'EUR',
     inventoryEnabled: false,
     exampleSet: 'custom',
   };
@@ -111,6 +115,30 @@ export async function checkAndMigrate() {
     logError('Migration', err);
     return { status: 'error', error: err };
   }
+}
+
+/**
+ * In-place schema upgrade for installs that already have IndexedDB data
+ * at an older dataVersion (e.g. 3, from before the IDR/currency feature).
+ * Idempotent - a no-op once meta.dataVersion already matches current.
+ */
+export async function upgradeSchema() {
+  const versionRow = await db.get(db.STORES.meta, 'dataVersion');
+  const currentVersion = versionRow?.value;
+  if (!currentVersion || currentVersion >= CURRENT_DATA_VERSION) {
+    return { upgraded: false };
+  }
+
+  // v3 -> v4: introduce settings.currencyCode (existing prices are EUR)
+  if (currentVersion < 4) {
+    const settingsRow = await db.get(db.STORES.settings, 'main');
+    if (settingsRow && !settingsRow.currencyCode) {
+      await db.put(db.STORES.settings, { ...settingsRow, currencyCode: 'EUR' });
+    }
+  }
+
+  await db.put(db.STORES.meta, { key: 'dataVersion', value: CURRENT_DATA_VERSION });
+  return { upgraded: true, from: currentVersion, to: CURRENT_DATA_VERSION };
 }
 
 export { CURRENT_DATA_VERSION };

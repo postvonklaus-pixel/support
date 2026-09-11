@@ -3,7 +3,7 @@
 import * as db from '../db.js';
 import { state, saveSettings } from '../state.js';
 import { sha256Hex, vibrate, toast } from '../utils.js';
-import { demoSetDrinks, demoSetFestival } from '../demo-data.js';
+import { demoSetDrinks, demoSetFestival, demoSetDrinksIDR, demoSetFestivalIDR } from '../demo-data.js';
 
 const LOCK_TIMEOUT_MS = 5 * 60 * 1000;
 
@@ -99,16 +99,22 @@ setInterval(() => {
 
 /* ---------------- Onboarding ---------------- */
 
-async function applyOnboardingChoice(setName) {
+const DEMO_SET_BUILDERS = {
+  'drinks-eur': demoSetDrinks,
+  'drinks-idr': demoSetDrinksIDR,
+  'festival-eur': demoSetFestival,
+  'festival-idr': demoSetFestivalIDR,
+};
+
+async function applyOnboardingChoice(setName, currencyCode) {
   const { saveProduct } = await import('../state.js');
-  let products = [];
-  if (setName === 'drinks') products = demoSetDrinks();
-  else if (setName === 'festival') products = demoSetFestival();
+  const builder = DEMO_SET_BUILDERS[setName];
+  const products = builder ? builder() : [];
 
   for (const product of products) {
     await saveProduct(product);
   }
-  await saveSettings({ exampleSet: setName === '' ? 'custom' : setName });
+  await saveSettings({ exampleSet: setName || 'custom', currencyCode });
 
   if (onboardingReloadMode) {
     document.getElementById('screen-onboarding').hidden = true;
@@ -118,7 +124,7 @@ async function applyOnboardingChoice(setName) {
     return;
   }
 
-  await db.put(db.STORES.meta, { key: 'dataVersion', value: 3 });
+  await db.put(db.STORES.meta, { key: 'dataVersion', value: 4 });
   document.getElementById('screen-onboarding').hidden = true;
   showPinScreen('Standard-PIN: 1234');
   toast('Standard-PIN ist 1234 – änderbar in Einstellungen');
@@ -131,9 +137,11 @@ function showOnboarding(reloadMode) {
   document.getElementById('screen-onboarding').hidden = false;
 }
 
-document.getElementById('choice-set-drinks').addEventListener('click', () => applyOnboardingChoice('drinks'));
-document.getElementById('choice-set-festival').addEventListener('click', () => applyOnboardingChoice('festival'));
-document.getElementById('choice-empty').addEventListener('click', () => applyOnboardingChoice(''));
+document.getElementById('choice-set-drinks-eur').addEventListener('click', () => applyOnboardingChoice('drinks-eur', 'EUR'));
+document.getElementById('choice-set-drinks-idr').addEventListener('click', () => applyOnboardingChoice('drinks-idr', 'IDR'));
+document.getElementById('choice-set-festival-eur').addEventListener('click', () => applyOnboardingChoice('festival-eur', 'EUR'));
+document.getElementById('choice-set-festival-idr').addEventListener('click', () => applyOnboardingChoice('festival-idr', 'IDR'));
+document.getElementById('choice-empty').addEventListener('click', () => applyOnboardingChoice('', 'IDR'));
 
 export function showOnboardingForReload() {
   showOnboarding(true);

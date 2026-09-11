@@ -1,7 +1,8 @@
 'use strict';
 
 import { state } from '../state.js';
-import { formatCurrency, escapeHtml, rangeForPeriod, formatDateShort } from '../utils.js';
+import { escapeHtml, rangeForPeriod, formatDateShort } from '../utils.js';
+import { formatCurrencyCompact } from '../currency.js';
 import {
   getSalesInRange, getTopProducts, getRevenueByCategory, getSalesPerDay,
   getPaymentMethodDistribution, getStockValue, getCriticalProducts, getOutOfStockCount, getSalesSummary,
@@ -20,7 +21,7 @@ document.querySelectorAll('#stat-period-tabs .category-tab').forEach((btn) => {
 const METHOD_LABEL = { cash: 'Bar', card: 'Karte', other: 'Sonstiges' };
 
 export function render() {
-  const currency = state.settings.currency;
+  const currencyCode = state.settings.currencyCode;
   const { from, to } = activePeriod === 'all' ? { from: 0, to: Date.now() } : rangeForPeriod(activePeriod);
   const sales = getSalesInRange(state.sales, from, to);
   const summary = getSalesSummary(sales);
@@ -41,9 +42,9 @@ export function render() {
   const body = document.getElementById('statistik-body');
   body.innerHTML = `
     <div class="kpi-grid">
-      <div class="kpi-card"><span class="kpi-value">${formatCurrency(summary.total, currency)}</span><span class="kpi-label">Gesamtumsatz</span></div>
+      <div class="kpi-card"><span class="kpi-value">${formatCurrencyCompact(summary.total, currencyCode)}</span><span class="kpi-label">Gesamtumsatz</span></div>
       <div class="kpi-card"><span class="kpi-value">${summary.count}</span><span class="kpi-label">Verkäufe</span></div>
-      <div class="kpi-card"><span class="kpi-value">${formatCurrency(summary.avg, currency)}</span><span class="kpi-label">Ø Bon</span></div>
+      <div class="kpi-card"><span class="kpi-value">${formatCurrencyCompact(summary.avg, currencyCode)}</span><span class="kpi-label">Ø Bon</span></div>
       <div class="kpi-card"><span class="kpi-value kpi-value-small">${escapeHtml(summary.topProduct)}</span><span class="kpi-label">Beliebtestes Produkt</span></div>
     </div>
 
@@ -53,7 +54,7 @@ export function render() {
         <div class="hbar-row">
           <span class="hbar-label">${escapeHtml(c.category)}</span>
           <div class="hbar-track"><div class="hbar-fill" style="width:${(c.revenue / maxCategoryRevenue) * 100}%"></div></div>
-          <span class="hbar-value">${formatCurrency(c.revenue, currency)}</span>
+          <span class="hbar-value">${formatCurrencyCompact(c.revenue, currencyCode)}</span>
         </div>
       `).join('')}
     </div>` : '<p class="product-list-empty">Keine Verkäufe im Zeitraum.</p>'}
@@ -62,7 +63,7 @@ export function render() {
       <div>
         <h3 class="detail-section-title">Top 10 nach Umsatz</h3>
         <ol class="top-list">
-          ${byRevenue.map((p) => `<li><span>${escapeHtml(p.name)}</span><strong>${formatCurrency(p.revenue, currency)}</strong></li>`).join('') || '<li class="top-list-empty">–</li>'}
+          ${byRevenue.map((p) => `<li><span>${escapeHtml(p.name)}</span><strong>${formatCurrencyCompact(p.revenue, currencyCode)}</strong></li>`).join('') || '<li class="top-list-empty">–</li>'}
         </ol>
       </div>
       <div>
@@ -77,7 +78,7 @@ export function render() {
     <div class="bar-chart bar-chart-14">
       ${perDay.map((d) => `
         <div class="bar-chart-col">
-          <div class="bar-chart-bar" style="height:${Math.max(4, (d.revenue / maxDayRevenue) * 100)}%" title="${formatCurrency(d.revenue, currency)}"></div>
+          <div class="bar-chart-bar" style="height:${Math.max(4, (d.revenue / maxDayRevenue) * 100)}%" title="${formatCurrencyCompact(d.revenue, currencyCode)}"></div>
           <div class="bar-chart-label">${formatDateShort(d.date)}</div>
         </div>
       `).join('')}
@@ -96,7 +97,7 @@ export function render() {
 
     <h3 class="detail-section-title">Bestandsübersicht</h3>
     <div class="kpi-grid">
-      <div class="kpi-card"><span class="kpi-value">${formatCurrency(stockValue, currency)}</span><span class="kpi-label">Lagerwert</span></div>
+      <div class="kpi-card"><span class="kpi-value">${formatCurrencyCompact(stockValue, currencyCode)}</span><span class="kpi-label">Lagerwert</span></div>
       <div class="kpi-card"><span class="kpi-value">${criticalCount}</span><span class="kpi-label">Unter Mindestbestand</span></div>
       <div class="kpi-card"><span class="kpi-value">${outOfStockCount}</span><span class="kpi-label">Ausverkauft</span></div>
     </div>

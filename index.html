@@ -50,12 +50,21 @@
     <h1 class="pin-title">Willkommen 👋</h1>
     <p class="pin-subtitle">Wähle ein Beispiel-Sortiment zum Start (inkl. Lagerbestand, kann später jederzeit angepasst werden).</p>
     <div class="onboarding-choices">
-      <button type="button" class="onboarding-choice" id="choice-set-drinks">
-        <strong>Getränkeverkauf</strong>
+      <button type="button" class="onboarding-choice" id="choice-set-drinks-eur">
+        <strong>Getränkeverkauf (Deutschland, EUR)</strong>
         <span>Cola, Bier, Kaffee, Snacks …</span>
       </button>
-      <button type="button" class="onboarding-choice" id="choice-set-festival">
-        <strong>Vereinsfest</strong>
+      <button type="button" class="onboarding-choice onboarding-choice-recommended" id="choice-set-drinks-idr">
+        <span class="onboarding-badge">Empfohlen</span>
+        <strong>Getränkeverkauf (Indonesien, IDR)</strong>
+        <span>Cola, Bier, Kaffee, Snacks …</span>
+      </button>
+      <button type="button" class="onboarding-choice" id="choice-set-festival-eur">
+        <strong>Vereinsfest (Deutschland, EUR)</strong>
+        <span>Bratwurst, Getränke, Kuchen, Tombola …</span>
+      </button>
+      <button type="button" class="onboarding-choice" id="choice-set-festival-idr">
+        <strong>Vereinsfest (Indonesien, IDR)</strong>
         <span>Bratwurst, Getränke, Kuchen, Tombola …</span>
       </button>
       <button type="button" class="onboarding-choice" id="choice-empty">
@@ -138,6 +147,7 @@
       <div class="subview-header">
         <button type="button" class="btn-back" data-back>← Lager</button>
         <h2>Wareneingang</h2>
+        <button type="button" class="btn-scan-header" id="wareneingang-scan">📷 Scannen</button>
       </div>
       <div class="stock-form" id="wareneingang-body"></div>
       <button type="button" class="btn btn-secondary stock-add-row" id="wareneingang-add-row">+ Position</button>
@@ -149,6 +159,7 @@
       <div class="subview-header">
         <button type="button" class="btn-back" data-back>← Lager</button>
         <h2>Warenausgang</h2>
+        <button type="button" class="btn-scan-header" id="warenausgang-scan">📷 Scannen</button>
       </div>
       <div class="stock-form" id="warenausgang-body"></div>
       <button type="button" class="btn btn-secondary stock-add-row" id="warenausgang-add-row">+ Position</button>
@@ -160,6 +171,7 @@
       <div class="subview-header">
         <button type="button" class="btn-back" data-back>← Lager</button>
         <h2>Inventur</h2>
+        <button type="button" class="btn-scan-header" id="inventur-scan">📷 Scannen</button>
       </div>
       <div class="inventur-list" id="inventur-list"></div>
       <button type="button" class="btn btn-primary stock-submit" id="inventur-submit">Inventur abschließen</button>
@@ -242,14 +254,48 @@
           <input type="text" id="setting-business-name" placeholder="Meine Kasse" autocomplete="off">
         </label>
         <label class="field">
-          <span>Währungssymbol</span>
-          <input type="text" id="setting-currency" placeholder="€" maxlength="3" autocomplete="off">
+          <span>Währung</span>
+          <select id="setting-currency-select">
+            <option value="EUR">Euro (EUR)</option>
+            <option value="IDR">Indonesische Rupiah (IDR)</option>
+            <option value="USD">US-Dollar (USD)</option>
+          </select>
         </label>
         <label class="field field-toggle">
           <span>Lagerverwaltung aktiv</span>
           <input type="checkbox" id="setting-inventory-enabled">
         </label>
       </form>
+
+      <div class="settings-section">
+        <h2>Preise umrechnen</h2>
+        <div class="settings-actions">
+          <button type="button" class="btn btn-secondary" id="btn-convert-prices">Alle Preise EUR → IDR umrechnen</button>
+          <p class="settings-hint" id="convert-prices-hint" hidden>Preis-Migration bereits durchgeführt.</p>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <h2>Scanner</h2>
+        <form class="settings-form" id="scanner-settings-form">
+          <label class="field field-toggle">
+            <span>Scanner-Ton</span>
+            <input type="checkbox" id="setting-scanner-sound">
+          </label>
+          <label class="field field-toggle">
+            <span>Vibration</span>
+            <input type="checkbox" id="setting-scanner-vibration">
+          </label>
+          <label class="field">
+            <span>Scanner-Modus Kasse</span>
+            <select id="setting-scanner-mode-kasse">
+              <option value="single">Einzeln</option>
+              <option value="continuous">Dauer</option>
+            </select>
+          </label>
+        </form>
+        <p class="settings-hint">In Wareneingang, Warenausgang und Inventur ist der Dauer-Modus immer aktiv.</p>
+      </div>
 
       <div class="settings-section">
         <h2>PIN ändern</h2>
@@ -334,7 +380,7 @@
           <input type="text" id="product-name" required autocomplete="off">
         </label>
         <label class="field">
-          <span>Preis (€) *</span>
+          <span id="product-price-label">Preis (€) *</span>
           <input type="number" id="product-price" inputmode="decimal" step="0.01" min="0" required>
         </label>
         <label class="field">
@@ -414,11 +460,29 @@
   <div class="modal modal-scanner">
     <div class="modal-header">
       <h2>Barcode scannen</h2>
-      <button type="button" class="modal-close" data-close="modal-scanner">✕</button>
+      <span class="scanner-counter" id="scanner-counter" hidden>0 Positionen gescannt</span>
+      <button type="button" class="modal-close" id="scanner-close-btn" data-close="modal-scanner">✕</button>
     </div>
     <div class="modal-body scanner-body">
-      <video id="scanner-video" class="scanner-video" playsinline muted></video>
+      <div class="scanner-video-wrap">
+        <video id="scanner-video" class="scanner-video" playsinline muted></video>
+        <div class="scanner-flash" id="scanner-flash"></div>
+      </div>
       <p id="scanner-status" class="scanner-status">Kamera wird gestartet …</p>
+
+      <div class="scanner-notfound-banner" id="scanner-notfound-banner" hidden>
+        <span id="scanner-notfound-text">Nicht gefunden</span>
+        <div class="scanner-notfound-actions">
+          <button type="button" class="btn btn-secondary" id="scanner-notfound-create">Neues Produkt anlegen</button>
+          <button type="button" class="btn btn-secondary" id="scanner-notfound-retry">Erneut scannen</button>
+        </div>
+      </div>
+
+      <button type="button" class="scanner-manual-link" id="scanner-manual-link">Barcode manuell eingeben</button>
+      <div class="scanner-manual-form" id="scanner-manual-form" hidden>
+        <input type="text" id="scanner-manual-input" inputmode="numeric" placeholder="Barcode-Nummer">
+        <button type="button" class="btn btn-primary" id="scanner-manual-confirm">OK</button>
+      </div>
     </div>
   </div>
 </div>
@@ -434,6 +498,40 @@
       <div id="sale-detail-content"></div>
       <div class="modal-actions">
         <button type="button" class="btn btn-danger" id="btn-delete-sale">Verkauf löschen</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Modal: Preis-Migration EUR -> IDR ===== -->
+<div class="modal-overlay" id="modal-convert-prices" hidden>
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Preise EUR → IDR umrechnen</h2>
+      <button type="button" class="modal-close" data-close="modal-convert-prices">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="convert-prices-warning">
+        Alle Produktpreise werden mit dem Umrechnungsfaktor multipliziert und gerundet.
+        Diese Aktion kann nicht rückgängig gemacht werden. Bitte vorher ein JSON-Backup erstellen!
+        Die Verkaufshistorie bleibt unverändert in EUR.
+      </p>
+      <label class="field">
+        <span>Umrechnungsfaktor</span>
+        <input type="number" id="convert-factor" inputmode="numeric" step="1" min="1" value="16000">
+      </label>
+      <label class="field">
+        <span>Rundung</span>
+        <select id="convert-rounding">
+          <option value="500">Auf 500 runden</option>
+          <option value="1000" selected>Auf 1.000 runden</option>
+          <option value="5000">Auf 5.000 runden</option>
+          <option value="0">Keine Rundung</option>
+        </select>
+      </label>
+      <div class="convert-preview" id="convert-preview"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-primary" id="btn-convert-confirm" style="width:100%">Backup erstellen &amp; umrechnen</button>
       </div>
     </div>
   </div>

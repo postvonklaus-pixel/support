@@ -2,6 +2,7 @@
 
 import * as db from './db.js';
 import { uuid, logError } from './utils.js';
+import { roundToStep } from './currency.js';
 
 const listeners = {};
 export function on(event, cb) {
@@ -20,9 +21,12 @@ export function emit(event, payload) {
 
 export const DEFAULT_SETTINGS = {
   shopName: 'Meine Kasse',
-  currency: '€',
+  currencyCode: 'EUR',
   inventoryEnabled: false,
   exampleSet: 'custom',
+  scannerSoundEnabled: true,
+  scannerVibrationEnabled: true,
+  scannerModeKasse: 'single',
 };
 
 export const state = {
@@ -50,9 +54,12 @@ export async function loadAll() {
   if (settingsRow) {
     state.settings = {
       shopName: settingsRow.shopName ?? DEFAULT_SETTINGS.shopName,
-      currency: settingsRow.currency ?? DEFAULT_SETTINGS.currency,
+      currencyCode: settingsRow.currencyCode ?? DEFAULT_SETTINGS.currencyCode,
       inventoryEnabled: settingsRow.inventoryEnabled ?? false,
       exampleSet: settingsRow.exampleSet ?? 'custom',
+      scannerSoundEnabled: settingsRow.scannerSoundEnabled ?? true,
+      scannerVibrationEnabled: settingsRow.scannerVibrationEnabled ?? true,
+      scannerModeKasse: settingsRow.scannerModeKasse ?? 'single',
     };
   }
   emit('data:loaded');
@@ -255,11 +262,40 @@ export async function recalcStockFromMovements() {
   return fixed;
 }
 
+/* ---------------- Currency migration (EUR -> IDR price conversion) ---------------- */
+
+export async function getCurrencyMigrationDone() {
+  const row = await db.get(db.STORES.meta, 'currencyMigrationDone');
+  return !!row?.value;
+}
+
+/**
+ * One-time conversion of all product prices from EUR to IDR.
+ * Historical sales are intentionally left untouched - they happened in EUR
+ * at the time and must stay accurate for bookkeeping.
+ */
+export async function convertPricesEurToIdr({ factor, roundTo }) {
+  let count = 0;
+  for (const product of state.products) {
+    const converted = roundToStep(product.price * factor, roundTo);
+    if (converted !== product.price) {
+      product.price = converted;
+      product.updatedAt = Date.now();
+      await db.put(db.STORES.products, product);
+      count += 1;
+    }
+  }
+  await saveSettings({ currencyCode: 'IDR' });
+  await db.put(db.STORES.meta, { key: 'currencyMigrationDone', value: true });
+  emit('products:changed');
+  return count;
+}
+
 /* ---------------- Full export / import ---------------- */
 
 export async function exportAll() {
   return {
-    version: 3,
+    version: 4,
     exportedAt: Date.now(),
     products: state.products,
     sales: state.sales,

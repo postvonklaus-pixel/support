@@ -3,8 +3,10 @@
 import { state, addMovement } from '../state.js';
 import { escapeHtml, toast, confirmDialog, vibrate } from '../utils.js';
 import { closeSubView } from '../router.js';
+import { openScanner } from '../barcode.js';
+import { openProductModal } from './produkte.js';
 
-export function createStockFormController({ containerId, addRowBtnId, submitBtnId, movementType, actionLabel }) {
+export function createStockFormController({ containerId, addRowBtnId, submitBtnId, scanBtnId, movementType, actionLabel }) {
   let rows = [{ productId: '', quantity: 1, note: '' }];
 
   function productOptions(selectedId) {
@@ -59,6 +61,29 @@ export function createStockFormController({ containerId, addRowBtnId, submitBtnI
     rows.push({ productId: '', quantity: 1, note: '' });
     renderRows();
   });
+
+  if (scanBtnId) {
+    document.getElementById(scanBtnId).addEventListener('click', () => {
+      openScanner((code) => {
+        const product = state.products.find((p) => p.barcode === code || p.id === code);
+        if (!product) return { success: false, message: `Nicht gefunden: ${code}` };
+
+        const existingRow = rows.find((r) => r.productId === product.id);
+        if (existingRow) {
+          existingRow.quantity += 1;
+        } else {
+          const emptyIdx = rows.findIndex((r) => !r.productId);
+          if (emptyIdx >= 0) rows[emptyIdx] = { productId: product.id, quantity: 1, note: '' };
+          else rows.push({ productId: product.id, quantity: 1, note: '' });
+        }
+        renderRows();
+        return { success: true, message: product.name };
+      }, {
+        mode: 'continuous',
+        onNotFoundCreate: (code) => openProductModal(null, { barcode: code }),
+      });
+    });
+  }
 
   document.getElementById(submitBtnId).addEventListener('click', async () => {
     const valid = rows.filter((r) => r.productId && r.quantity > 0);

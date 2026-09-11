@@ -1,6 +1,6 @@
 'use strict';
 
-const CACHE_VERSION = 'v4';
+const CACHE_VERSION = 'v5';
 const CACHE_NAME = `pos-kasse-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `pos-kasse-runtime-${CACHE_VERSION}`;
 
@@ -13,6 +13,7 @@ const CORE_ASSETS = [
   './icon-512.png',
   './js/app.js',
   './js/db.js',
+  './js/currency.js',
   './js/migration.js',
   './js/state.js',
   './js/router.js',

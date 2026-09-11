@@ -148,6 +148,17 @@ h1, h2 { margin: 0; }
 .onboarding-choice strong { font-size: 16px; }
 .onboarding-choice span { color: var(--text-muted); font-size: 13px; }
 .onboarding-choice:active { background: var(--surface-alt); }
+.onboarding-choice-recommended { border-color: var(--accent); border-width: 2px; }
+.onboarding-badge {
+  display: inline-block;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  margin-bottom: 4px;
+}
 
 /* ===================== App Shell ===================== */
 .app {
@@ -451,6 +462,23 @@ h1, h2 { margin: 0; }
 .settings-section { padding: 0 16px 16px; }
 .settings-section h2 { font-size: 15px; margin-bottom: 10px; }
 .settings-actions { display: flex; flex-direction: column; gap: 10px; }
+.settings-hint { font-size: 12px; color: var(--text-muted); padding: 0 16px; margin: -4px 0 8px; }
+
+/* Preis-Migration EUR -> IDR */
+.convert-prices-warning { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+.convert-preview { margin-top: 8px; }
+.convert-preview-title { font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
+.convert-preview-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+  padding: 8px 10px;
+  background: var(--surface-alt);
+  border-radius: var(--radius-sm);
+  margin-bottom: 6px;
+}
+.convert-preview-row span:first-child { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .app-version { text-align: center; color: var(--text-muted); font-size: 12px; padding: 20px; }
 
 /* ===================== Modals ===================== */
@@ -568,18 +596,73 @@ h1, h2 { margin: 0; }
 
 /* Scanner */
 .modal-scanner { height: 80vh; }
-.scanner-body { padding: 0; display: flex; flex-direction: column; height: 100%; }
+.modal-scanner .modal-header { gap: 10px; }
+.scanner-counter {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+  white-space: nowrap;
+}
+.scanner-body { padding: 0; display: flex; flex-direction: column; height: 100%; overflow-y: auto; }
+.scanner-video-wrap { position: relative; flex-shrink: 1; min-height: 0; flex: 1; }
 .scanner-video {
   width: 100%;
-  flex: 1;
+  height: 100%;
   background: #000;
   object-fit: cover;
+  display: block;
 }
+.scanner-flash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+}
+.scanner-flash.flash-success { background: rgba(34, 197, 94, 0.45); opacity: 1; transition: opacity 0.2s ease-out; }
+.scanner-flash.flash-error { background: rgba(220, 38, 38, 0.45); opacity: 1; transition: opacity 0.2s ease-out; }
 .scanner-status {
   text-align: center;
   padding: 14px;
   color: var(--text-muted);
   font-size: 14px;
+  flex-shrink: 0;
+}
+.scanner-notfound-banner {
+  margin: 0 16px 12px;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--danger) 14%, var(--surface));
+  border: 1px solid var(--danger);
+  flex-shrink: 0;
+}
+.scanner-notfound-banner span { display: block; font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+.scanner-notfound-actions { display: flex; gap: 8px; }
+.scanner-notfound-actions .btn { flex: 1; font-size: 12px; padding: 8px 6px; }
+.scanner-manual-link {
+  border: none;
+  background: none;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 10px 16px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.scanner-manual-form {
+  display: flex;
+  gap: 8px;
+  padding: 0 16px 16px;
+  flex-shrink: 0;
+}
+.scanner-manual-form input {
+  flex: 1;
+  min-height: 44px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-alt);
+  color: var(--text);
+  font-size: 16px;
 }
 
 /* ===================== Sold out / stock warnings on Kasse ===================== */
@@ -640,7 +723,18 @@ h1, h2 { margin: 0; }
   padding: 12px 16px;
   flex-shrink: 0;
 }
-.subview-header h2 { font-size: 16px; }
+.subview-header h2 { font-size: 16px; flex: 1; }
+.btn-scan-header {
+  border: none;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  min-height: 36px;
+  white-space: nowrap;
+}
 .btn-back {
   border: none;
   background: var(--surface-alt);
@@ -692,7 +786,9 @@ h1, h2 { margin: 0; }
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
+  transition: background-color 0.3s ease;
 }
+.inventur-row.inventur-row-highlight { background: color-mix(in srgb, #ca8a04 25%, var(--surface)); }
 .inventur-row-head { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
 .inventur-row-name { font-weight: 600; }
 .inventur-row-expected { color: var(--text-muted); }

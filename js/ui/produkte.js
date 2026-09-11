@@ -1,7 +1,8 @@
 'use strict';
 
 import { state, getCategories, saveProduct, deleteProduct } from '../state.js';
-import { formatCurrency, escapeHtml, toast, openModal, closeModal, confirmDialog, parseGermanNumber, uuid } from '../utils.js';
+import { escapeHtml, toast, openModal, closeModal, confirmDialog, uuid } from '../utils.js';
+import { formatCurrency, parseAmountInput, applyAmountInputAttrs, getCurrencyConfig } from '../currency.js';
 import { openScanner } from '../barcode.js';
 
 const COLOR_PALETTE = ['#2563eb', '#f97316', '#16a34a', '#db2777', '#7c3aed', '#0891b2', '#ca8a04', '#64748b'];
@@ -31,7 +32,7 @@ export function render() {
         <div class="product-list-swatch" style="${product.imageBase64 ? `background-image:url(${product.imageBase64})` : `background-color:${product.color}`}"></div>
         <div class="product-list-info">
           <div class="product-list-name">${escapeHtml(product.name)}</div>
-          <div class="product-list-meta">${formatCurrency(product.price, state.settings.currency)}${product.barcode ? ' · ' + escapeHtml(product.barcode) : ''}</div>
+          <div class="product-list-meta">${formatCurrency(product.price, state.settings.currencyCode)}${product.barcode ? ' · ' + escapeHtml(product.barcode) : ''}</div>
         </div>
         ${stockBadge}
       `;
@@ -76,7 +77,10 @@ export function openProductModal(product, prefill) {
   document.getElementById('product-modal-title').textContent = isEdit ? 'Produkt bearbeiten' : 'Neues Produkt';
   document.getElementById('product-id').value = isEdit ? product.id : '';
   document.getElementById('product-name').value = isEdit ? product.name : '';
-  document.getElementById('product-price').value = isEdit ? product.price : '';
+  const priceInput = document.getElementById('product-price');
+  priceInput.value = isEdit ? product.price : '';
+  applyAmountInputAttrs(priceInput, state.settings.currencyCode);
+  document.getElementById('product-price-label').textContent = `Preis (${getCurrencyConfig(state.settings.currencyCode).symbol}) *`;
   document.getElementById('product-category').value = isEdit ? product.category : '';
   document.getElementById('product-barcode').value = isEdit ? (product.barcode || '') : (prefill?.barcode || '');
   document.getElementById('product-track-stock').checked = isEdit ? !!product.trackStock : false;
@@ -153,7 +157,7 @@ document.getElementById('product-form').addEventListener('submit', async (e) => 
   e.preventDefault();
   const id = document.getElementById('product-id').value;
   const name = document.getElementById('product-name').value.trim();
-  const price = parseGermanNumber(document.getElementById('product-price').value);
+  const price = parseAmountInput(document.getElementById('product-price').value, state.settings.currencyCode);
   const category = document.getElementById('product-category').value.trim();
   const barcode = document.getElementById('product-barcode').value.trim();
   const trackStock = document.getElementById('product-track-stock').checked;

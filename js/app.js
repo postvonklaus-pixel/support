@@ -1,7 +1,7 @@
 'use strict';
 
 import * as db from './db.js';
-import { checkAndMigrate } from './migration.js';
+import { checkAndMigrate, upgradeSchema } from './migration.js';
 import { state, loadAll, on } from './state.js';
 import { closeModal } from './utils.js';
 import { stopScanner } from './barcode.js';
@@ -64,6 +64,7 @@ async function bootstrap() {
   try {
     await db.openDB();
     const migrationResult = await checkAndMigrate();
+    await upgradeSchema();
     await loadAll();
     await pin.initAuth({ onUnlock, migrationResult });
   } catch (err) {
@@ -75,19 +76,26 @@ async function bootstrap() {
 }
 
 if ('serviceWorker' in navigator) {
+  // Only reload when an update REPLACES an already-controlling service
+  // worker. On a brand-new install there is no prior controller yet - the
+  // very first controllerchange just reflects the current page's own SW
+  // taking control for the first time, and this page's code is already the
+  // freshest version (fetched straight from the network). Reloading in
+  // that case would interrupt first-run UI (e.g. the migration notice)
+  // before the user ever sees it.
+  let hadControllerAtLoad = !!navigator.serviceWorker.controller;
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('service-worker.js')
       .then((reg) => reg.update().catch(() => {}))
       .catch(() => {});
   });
-  // A newly activated service worker (skipWaiting + clients.claim in
-  // service-worker.js) takes control of this page without a manual
-  // restart - force a one-time reload so the new app shell/assets are
-  // actually used, instead of leaving stale code running until the user
-  // closes and reopens the app themselves (notably slow on iOS PWAs).
   let reloadedForUpdate = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (reloadedForUpdate) return;
+    if (!hadControllerAtLoad) {
+      hadControllerAtLoad = true;
+      return;
+    }
     reloadedForUpdate = true;
     window.location.reload();
   });
