@@ -76,7 +76,20 @@ async function bootstrap() {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('service-worker.js').catch(() => {});
+    navigator.serviceWorker.register('service-worker.js')
+      .then((reg) => reg.update().catch(() => {}))
+      .catch(() => {});
+  });
+  // A newly activated service worker (skipWaiting + clients.claim in
+  // service-worker.js) takes control of this page without a manual
+  // restart - force a one-time reload so the new app shell/assets are
+  // actually used, instead of leaving stale code running until the user
+  // closes and reopens the app themselves (notably slow on iOS PWAs).
+  let reloadedForUpdate = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (reloadedForUpdate) return;
+    reloadedForUpdate = true;
+    window.location.reload();
   });
 }
 

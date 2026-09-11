@@ -1,6 +1,6 @@
 'use strict';
 
-const CACHE_VERSION = 'v3';
+const CACHE_VERSION = 'v4';
 const CACHE_NAME = `pos-kasse-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `pos-kasse-runtime-${CACHE_VERSION}`;
 
