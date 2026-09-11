@@ -1,6 +1,6 @@
 'use strict';
 
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v3';
 const CACHE_NAME = `pos-kasse-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `pos-kasse-runtime-${CACHE_VERSION}`;
 
@@ -8,10 +8,32 @@ const CORE_ASSETS = [
   './',
   './index.html',
   './style.css',
-  './app.js',
   './manifest.json',
   './icon-192.png',
   './icon-512.png',
+  './js/app.js',
+  './js/db.js',
+  './js/migration.js',
+  './js/state.js',
+  './js/router.js',
+  './js/utils.js',
+  './js/stats.js',
+  './js/barcode.js',
+  './js/demo-data.js',
+  './js/ui/pin.js',
+  './js/ui/kasse.js',
+  './js/ui/produkte.js',
+  './js/ui/lager.js',
+  './js/ui/stock-form.js',
+  './js/ui/wareneingang.js',
+  './js/ui/warenausgang.js',
+  './js/ui/inventur.js',
+  './js/ui/bewegungen.js',
+  './js/ui/historie.js',
+  './js/ui/statistik.js',
+  './js/ui/produkt-detail.js',
+  './js/ui/bestellliste.js',
+  './js/ui/einstellungen.js',
 ];
 
 self.addEventListener('install', (event) => {

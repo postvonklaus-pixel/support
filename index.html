@@ -48,13 +48,13 @@
 <section id="screen-onboarding" class="screen" hidden>
   <div class="onboarding-wrap">
     <h1 class="pin-title">Willkommen 👋</h1>
-    <p class="pin-subtitle">Wähle ein Beispiel-Sortiment zum Start (kann später jederzeit angepasst werden).</p>
+    <p class="pin-subtitle">Wähle ein Beispiel-Sortiment zum Start (inkl. Lagerbestand, kann später jederzeit angepasst werden).</p>
     <div class="onboarding-choices">
-      <button type="button" class="onboarding-choice" id="choice-set-a">
+      <button type="button" class="onboarding-choice" id="choice-set-drinks">
         <strong>Getränkeverkauf</strong>
         <span>Cola, Bier, Kaffee, Snacks …</span>
       </button>
-      <button type="button" class="onboarding-choice" id="choice-set-b">
+      <button type="button" class="onboarding-choice" id="choice-set-festival">
         <strong>Vereinsfest</strong>
         <span>Bratwurst, Getränke, Kuchen, Tombola …</span>
       </button>
@@ -65,6 +65,18 @@
     </div>
   </div>
 </section>
+
+<!-- ===== Migration notice ===== -->
+<div class="modal-overlay" id="modal-migration" hidden>
+  <div class="modal modal-confirm">
+    <div class="modal-body">
+      <p id="migration-message">Daten wurden migriert.</p>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-primary" id="migration-ok" style="width:100%">Verstanden</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- ===== Main App ===== -->
 <div id="app" class="app" hidden>
@@ -101,6 +113,106 @@
       <div class="product-list" id="product-list"></div>
     </section>
 
+    <!-- ---- Lager ---- -->
+    <section id="view-lager" class="view">
+      <div class="lager-toolbar">
+        <input type="search" id="lager-search" class="lager-search" placeholder="Produkt suchen …">
+        <div class="lager-filters" id="lager-filters">
+          <button type="button" class="category-tab active" data-filter="alle">Alle</button>
+          <button type="button" class="category-tab" data-filter="kritisch">Kritisch</button>
+          <button type="button" class="category-tab" data-filter="ausverkauft">Ausverkauft</button>
+        </div>
+      </div>
+      <div class="lager-actions">
+        <button type="button" class="btn btn-secondary" id="btn-wareneingang">📥 Wareneingang</button>
+        <button type="button" class="btn btn-secondary" id="btn-warenausgang">📤 Warenausgang</button>
+        <button type="button" class="btn btn-secondary" id="btn-inventur">🧮 Inventur</button>
+        <button type="button" class="btn btn-secondary" id="btn-bewegungen">📜 Bewegungen</button>
+        <button type="button" class="btn btn-secondary btn-bestellliste" id="btn-bestellliste">🛒 Bestellliste</button>
+      </div>
+      <div class="lager-list" id="lager-list"></div>
+    </section>
+
+    <!-- ---- Wareneingang ---- -->
+    <section id="view-wareneingang" class="view">
+      <div class="subview-header">
+        <button type="button" class="btn-back" data-back>← Lager</button>
+        <h2>Wareneingang</h2>
+      </div>
+      <div class="stock-form" id="wareneingang-body"></div>
+      <button type="button" class="btn btn-secondary stock-add-row" id="wareneingang-add-row">+ Position</button>
+      <button type="button" class="btn btn-primary stock-submit" id="wareneingang-submit">Wareneingang buchen</button>
+    </section>
+
+    <!-- ---- Warenausgang ---- -->
+    <section id="view-warenausgang" class="view">
+      <div class="subview-header">
+        <button type="button" class="btn-back" data-back>← Lager</button>
+        <h2>Warenausgang</h2>
+      </div>
+      <div class="stock-form" id="warenausgang-body"></div>
+      <button type="button" class="btn btn-secondary stock-add-row" id="warenausgang-add-row">+ Position</button>
+      <button type="button" class="btn btn-primary stock-submit" id="warenausgang-submit">Warenausgang buchen</button>
+    </section>
+
+    <!-- ---- Inventur ---- -->
+    <section id="view-inventur" class="view">
+      <div class="subview-header">
+        <button type="button" class="btn-back" data-back>← Lager</button>
+        <h2>Inventur</h2>
+      </div>
+      <div class="inventur-list" id="inventur-list"></div>
+      <button type="button" class="btn btn-primary stock-submit" id="inventur-submit">Inventur abschließen</button>
+    </section>
+
+    <!-- ---- Bewegungsverlauf ---- -->
+    <section id="view-bewegungen" class="view">
+      <div class="subview-header">
+        <button type="button" class="btn-back" data-back>← Lager</button>
+        <h2>Bewegungsverlauf</h2>
+      </div>
+      <div class="bewegungen-filters" id="bewegungen-filters">
+        <select id="bewegungen-filter-product" class="bewegungen-select"></select>
+        <select id="bewegungen-filter-type" class="bewegungen-select">
+          <option value="alle">Alle Typen</option>
+          <option value="in">Wareneingang</option>
+          <option value="out">Warenausgang</option>
+          <option value="sale">Verkauf</option>
+          <option value="adjustment">Inventur</option>
+          <option value="initial">Anfangsbestand</option>
+        </select>
+        <select id="bewegungen-filter-period" class="bewegungen-select">
+          <option value="alle">Gesamt</option>
+          <option value="today">Heute</option>
+          <option value="week">Woche</option>
+          <option value="month">Monat</option>
+        </select>
+      </div>
+      <div class="bewegungen-list" id="bewegungen-list"></div>
+    </section>
+
+    <!-- ---- Produkt-Detail ---- -->
+    <section id="view-produkt-detail" class="view">
+      <div class="subview-header">
+        <button type="button" class="btn-back" data-back>← Lager</button>
+        <h2 id="produkt-detail-title">Produkt</h2>
+      </div>
+      <div id="produkt-detail-body"></div>
+    </section>
+
+    <!-- ---- Bestellliste ---- -->
+    <section id="view-bestellliste" class="view">
+      <div class="subview-header">
+        <button type="button" class="btn-back" data-back>← Lager</button>
+        <h2>Bestellliste</h2>
+      </div>
+      <div class="bestellliste-actions">
+        <button type="button" class="btn btn-secondary" id="btn-bestellliste-share">📤 Als Text teilen</button>
+        <button type="button" class="btn btn-secondary" id="btn-bestellliste-ack">✓ Zur Kenntnis genommen</button>
+      </div>
+      <div id="bestellliste-body"></div>
+    </section>
+
     <!-- ---- Historie ---- -->
     <section id="view-historie" class="view">
       <div class="today-summary" id="today-summary">
@@ -108,6 +220,18 @@
         <span class="today-summary-value" id="today-summary-value">0,00 €</span>
       </div>
       <div class="sale-list" id="sale-list"></div>
+    </section>
+
+    <!-- ---- Statistik ---- -->
+    <section id="view-statistik" class="view">
+      <div class="stat-period-tabs" id="stat-period-tabs">
+        <button type="button" class="category-tab" data-period="today">Heute</button>
+        <button type="button" class="category-tab" data-period="week">Woche</button>
+        <button type="button" class="category-tab active" data-period="month">Monat</button>
+        <button type="button" class="category-tab" data-period="year">Jahr</button>
+        <button type="button" class="category-tab" data-period="all">Gesamt</button>
+      </div>
+      <div id="statistik-body"></div>
     </section>
 
     <!-- ---- Einstellungen ---- -->
@@ -120,6 +244,10 @@
         <label class="field">
           <span>Währungssymbol</span>
           <input type="text" id="setting-currency" placeholder="€" maxlength="3" autocomplete="off">
+        </label>
+        <label class="field field-toggle">
+          <span>Lagerverwaltung aktiv</span>
+          <input type="checkbox" id="setting-inventory-enabled">
         </label>
       </form>
 
@@ -143,17 +271,18 @@
       </div>
 
       <div class="settings-section">
-        <h2>Daten</h2>
+        <h2>Lager &amp; Daten</h2>
         <div class="settings-actions">
-          <button type="button" class="btn btn-secondary" id="btn-export">Export (JSON)</button>
-          <button type="button" class="btn btn-secondary" id="btn-import">Import (JSON)</button>
+          <button type="button" class="btn btn-secondary" id="btn-recalc-stock">Bestände aus Bewegungen neu berechnen</button>
+          <button type="button" class="btn btn-secondary" id="btn-export">Daten exportieren (JSON)</button>
+          <button type="button" class="btn btn-secondary" id="btn-import">Daten importieren (JSON)</button>
           <input type="file" id="import-file" accept="application/json" hidden>
           <button type="button" class="btn btn-secondary" id="btn-reload-demo">Beispieldaten neu laden</button>
           <button type="button" class="btn btn-danger" id="btn-delete-all">Alle Daten löschen</button>
         </div>
       </div>
 
-      <p class="app-version">PoS Kasse · lokal &amp; offline</p>
+      <p class="app-version">PoS Kasse · lokal &amp; offline · IndexedDB</p>
     </section>
 
   </main>
@@ -165,11 +294,17 @@
     <button type="button" class="tab-btn" data-view="produkte">
       <span class="tab-icon">📦</span><span>Produkte</span>
     </button>
+    <button type="button" class="tab-btn" data-view="lager">
+      <span class="tab-icon">🏷️</span><span>Lager</span>
+    </button>
     <button type="button" class="tab-btn" data-view="historie">
       <span class="tab-icon">📊</span><span>Historie</span>
     </button>
+    <button type="button" class="tab-btn" data-view="statistik">
+      <span class="tab-icon">📈</span><span>Statistik</span>
+    </button>
     <button type="button" class="tab-btn" data-view="einstellungen">
-      <span class="tab-icon">⚙️</span><span>Einstellungen</span>
+      <span class="tab-icon">⚙️</span><span>Mehr</span>
     </button>
   </nav>
 </div>
@@ -218,6 +353,20 @@
             <button type="button" class="btn btn-secondary" id="btn-scan-in-form">📷</button>
           </div>
         </label>
+        <label class="field field-toggle">
+          <span>Bestand verfolgen</span>
+          <input type="checkbox" id="product-track-stock">
+        </label>
+        <div class="stock-fields" id="product-stock-fields" hidden>
+          <label class="field">
+            <span>Bestand</span>
+            <input type="number" id="product-stock" inputmode="numeric" step="1" min="0">
+          </label>
+          <label class="field">
+            <span>Mindestbestand</span>
+            <input type="number" id="product-min-stock" inputmode="numeric" step="1" min="0">
+          </label>
+        </div>
         <div class="modal-actions">
           <button type="button" class="btn btn-danger" id="btn-delete-product" hidden>Löschen</button>
           <button type="submit" class="btn btn-primary">Speichern</button>
@@ -240,9 +389,9 @@
         <strong id="checkout-total-value">0,00 €</strong>
       </div>
       <div class="payment-methods" id="payment-methods">
-        <button type="button" class="payment-method" data-method="bar">💵<span>Bar</span></button>
-        <button type="button" class="payment-method" data-method="karte">💳<span>Karte</span></button>
-        <button type="button" class="payment-method" data-method="sonstiges">🔖<span>Sonstiges</span></button>
+        <button type="button" class="payment-method" data-method="cash">💵<span>Bar</span></button>
+        <button type="button" class="payment-method" data-method="card">💳<span>Karte</span></button>
+        <button type="button" class="payment-method" data-method="other">🔖<span>Sonstiges</span></button>
       </div>
       <div class="cash-input-wrap" id="cash-input-wrap" hidden>
         <label class="field">
@@ -306,6 +455,6 @@
 <!-- ===== Toast ===== -->
 <div class="toast" id="toast" hidden></div>
 
-<script src="app.js"></script>
+<script type="module" src="js/app.js"></script>
 </body>
 </html>

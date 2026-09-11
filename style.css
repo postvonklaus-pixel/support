@@ -189,16 +189,16 @@ h1, h2 { margin: 0; }
   flex: 1;
   border: none;
   background: none;
-  padding: 8px 4px 10px;
+  padding: 6px 2px 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  font-size: 11px;
+  font-size: 10px;
   color: var(--text-muted);
   min-height: 44px;
 }
-.tab-icon { font-size: 20px; }
+.tab-icon { font-size: 18px; }
 .tab-btn.active { color: var(--accent); font-weight: 600; }
 
 /* ===================== Kasse / Products ===================== */
@@ -581,6 +581,323 @@ h1, h2 { margin: 0; }
   color: var(--text-muted);
   font-size: 14px;
 }
+
+/* ===================== Sold out / stock warnings on Kasse ===================== */
+.product-btn.sold-out { opacity: 0.45; }
+.p-soldout-label {
+  position: absolute; top: 6px; left: 6px;
+  background: rgba(0,0,0,0.65); color: #fff;
+  font-size: 10px; font-weight: 700;
+  padding: 3px 7px; border-radius: 999px;
+}
+.p-warning { position: absolute; top: 6px; right: 6px; font-size: 16px; }
+.product-btn .p-badge { left: auto; }
+
+/* ===================== Stock pills ===================== */
+.stock-pill {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 9px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.stock-pill.stock-ok { background: color-mix(in srgb, var(--success) 18%, transparent); color: var(--success); }
+.stock-pill.stock-warning { background: color-mix(in srgb, #ca8a04 20%, transparent); color: #ca8a04; }
+.stock-pill.stock-critical { background: color-mix(in srgb, var(--danger) 18%, transparent); color: var(--danger); }
+.stock-pill.stock-untracked { background: var(--surface-alt); color: var(--text-muted); }
+
+/* ===================== Lager ===================== */
+.lager-toolbar { padding: 12px 16px 0; flex-shrink: 0; }
+.lager-search {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 16px;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+.lager-filters { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+.lager-actions {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  padding: 12px 16px;
+  flex-shrink: 0;
+}
+.lager-actions .btn { font-size: 13px; padding: 10px 6px; }
+.btn-bestellliste { grid-column: 1 / -1; }
+.lager-list { flex: 1; overflow-y: auto; padding: 0 16px 16px; }
+
+/* ===================== Subview header (Wareneingang, Inventur, etc.) ===================== */
+.subview-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  flex-shrink: 0;
+}
+.subview-header h2 { font-size: 16px; }
+.btn-back {
+  border: none;
+  background: var(--surface-alt);
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  min-height: 36px;
+}
+
+/* ===================== Stock forms (Wareneingang / Warenausgang) ===================== */
+.stock-form { flex: 1; overflow-y: auto; padding: 0 16px; display: flex; flex-direction: column; gap: 10px; }
+.stock-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  padding: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.stock-row select, .stock-row input {
+  min-height: 44px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-alt);
+  color: var(--text);
+  font-size: 15px;
+  grid-column: 1 / -1;
+}
+.stock-row-qty { grid-column: 1 / 2 !important; }
+.stock-row-remove {
+  grid-column: 2 / 3;
+  border: none;
+  background: var(--surface-alt);
+  color: var(--danger);
+  border-radius: var(--radius-sm);
+  min-height: 44px;
+  font-size: 16px;
+}
+.stock-add-row { margin: 10px 16px 0; }
+.stock-submit { margin: 10px 16px 16px; }
+
+/* ===================== Inventur ===================== */
+.inventur-list { flex: 1; overflow-y: auto; padding: 0 16px; display: flex; flex-direction: column; gap: 10px; }
+.inventur-row {
+  padding: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.inventur-row-head { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
+.inventur-row-name { font-weight: 600; }
+.inventur-row-expected { color: var(--text-muted); }
+.inventur-row-body { display: flex; gap: 8px; }
+.inventur-row-count {
+  width: 90px;
+  min-height: 44px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-alt);
+  color: var(--text);
+  font-size: 16px;
+}
+.inventur-row-note {
+  flex: 1;
+  min-height: 44px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface-alt);
+  color: var(--text);
+  font-size: 15px;
+}
+.inventur-row.inventur-row-diff { border-color: #ca8a04; }
+.inventur-row.inventur-row-diff-neg { border-color: var(--danger); }
+.inventur-row.inventur-row-diff-pos { border-color: var(--success); }
+
+/* ===================== Bewegungsverlauf ===================== */
+.bewegungen-filters {
+  display: flex;
+  gap: 8px;
+  padding: 0 16px 12px;
+  overflow-x: auto;
+  flex-shrink: 0;
+}
+.bewegungen-select {
+  min-height: 40px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+  white-space: nowrap;
+}
+.bewegungen-list { flex: 1; overflow-y: auto; padding: 0 16px 16px; }
+.movement-list-compact { padding: 0 16px; }
+.movement-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 8px;
+}
+.movement-icon { font-size: 18px; }
+.movement-info { flex: 1; min-width: 0; }
+.movement-title { font-weight: 600; font-size: 14px; }
+.movement-type { font-weight: 400; color: var(--text-muted); font-size: 12px; }
+.movement-meta { font-size: 12px; color: var(--text-muted); }
+.movement-qty { font-weight: 700; font-size: 15px; flex-shrink: 0; }
+.movement-qty-pos { color: var(--success); }
+.movement-qty-neg { color: var(--danger); }
+
+/* ===================== Produkt-Detail / KPI / Charts ===================== */
+.detail-stock-hero {
+  margin: 12px 16px 0;
+  padding: 20px;
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, var(--accent), #1d4ed8);
+  color: #fff;
+  text-align: center;
+}
+.detail-stock-hero-untracked { background: var(--surface-alt); color: var(--text-muted); }
+.detail-stock-value { font-size: 36px; font-weight: 800; }
+.detail-stock-label { font-size: 13px; opacity: 0.9; }
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  padding: 16px;
+}
+.kpi-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.kpi-value { font-size: 20px; font-weight: 800; }
+.kpi-value-small { font-size: 14px; font-weight: 700; line-height: 1.3; }
+.kpi-label { font-size: 12px; color: var(--text-muted); }
+
+.detail-section-title {
+  padding: 4px 16px;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.bar-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  padding: 12px 16px 4px;
+  height: 140px;
+}
+.bar-chart-14 .bar-chart-col { min-width: 18px; }
+.bar-chart-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+  gap: 4px;
+}
+.bar-chart-value { font-size: 10px; color: var(--text-muted); }
+.bar-chart-bar {
+  width: 100%;
+  max-width: 26px;
+  background: var(--accent);
+  border-radius: 4px 4px 0 0;
+  min-height: 4px;
+}
+.bar-chart-label { font-size: 9px; color: var(--text-muted); white-space: nowrap; }
+
+.hbar-chart { padding: 4px 16px 16px; display: flex; flex-direction: column; gap: 10px; }
+.hbar-row { display: grid; grid-template-columns: 84px 1fr 60px; align-items: center; gap: 8px; font-size: 13px; }
+.hbar-label { color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hbar-track { height: 10px; border-radius: 999px; background: var(--surface-alt); overflow: hidden; }
+.hbar-fill { height: 100%; background: var(--accent); border-radius: 999px; }
+.hbar-value { text-align: right; font-weight: 600; font-size: 12px; }
+
+.stat-period-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  overflow-x: auto;
+  flex-shrink: 0;
+}
+.stat-two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 4px 16px 16px;
+}
+@media (max-width: 420px) {
+  .stat-two-col { grid-template-columns: 1fr; }
+}
+.top-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.top-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+}
+.top-list li span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.top-list-empty { color: var(--text-muted); justify-content: center; }
+
+.detail-actions {
+  display: flex;
+  gap: 8px;
+  padding: 8px 16px 24px;
+  flex-wrap: wrap;
+}
+.detail-actions .btn { flex: 1; min-width: 100px; }
+
+/* ===================== Bestellliste ===================== */
+.bestellliste-actions { display: flex; gap: 8px; padding: 0 16px 12px; flex-shrink: 0; }
+.bestellliste-actions .btn { flex: 1; font-size: 13px; }
+.bestellliste-ack-note {
+  margin: 0 16px 12px;
+  padding: 10px 12px;
+  background: color-mix(in srgb, var(--success) 15%, transparent);
+  color: var(--success);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+}
+#view-bestellliste, #view-bewegungen, #view-inventur, #view-wareneingang,
+#view-warenausgang, #view-produkt-detail { overflow-y: auto; }
+
+/* ===================== Toggle field ===================== */
+.field-toggle {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+.field-toggle input[type="checkbox"] {
+  width: 22px;
+  height: 22px;
+}
+.stock-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
 /* Toast */
 .toast {
