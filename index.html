@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Kasse</title>
+
+<meta name="theme-color" content="#2563eb">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Kasse">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+<link rel="manifest" href="manifest.json">
+
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ===== PIN Screen ===== -->
+<section id="screen-pin" class="screen" hidden>
+  <div class="pin-wrap">
+    <h1 id="pin-title" class="pin-title">Kasse entsperren</h1>
+    <p id="pin-subtitle" class="pin-subtitle">PIN eingeben</p>
+    <div class="pin-dots" id="pin-dots" aria-hidden="true">
+      <span class="pin-dot"></span><span class="pin-dot"></span><span class="pin-dot"></span><span class="pin-dot"></span>
+    </div>
+    <p id="pin-error" class="pin-error" hidden>Falscher PIN</p>
+    <div class="pin-keypad" id="pin-keypad">
+      <button type="button" class="pin-key" data-key="1">1</button>
+      <button type="button" class="pin-key" data-key="2">2</button>
+      <button type="button" class="pin-key" data-key="3">3</button>
+      <button type="button" class="pin-key" data-key="4">4</button>
+      <button type="button" class="pin-key" data-key="5">5</button>
+      <button type="button" class="pin-key" data-key="6">6</button>
+      <button type="button" class="pin-key" data-key="7">7</button>
+      <button type="button" class="pin-key" data-key="8">8</button>
+      <button type="button" class="pin-key" data-key="9">9</button>
+      <span class="pin-key pin-key-empty"></span>
+      <button type="button" class="pin-key" data-key="0">0</button>
+      <button type="button" class="pin-key pin-key-del" data-key="del">⌫</button>
+    </div>
+  </div>
+</section>
+
+<!-- ===== First run: choose demo data ===== -->
+<section id="screen-onboarding" class="screen" hidden>
+  <div class="onboarding-wrap">
+    <h1 class="pin-title">Willkommen 👋</h1>
+    <p class="pin-subtitle">Wähle ein Beispiel-Sortiment zum Start (kann später jederzeit angepasst werden).</p>
+    <div class="onboarding-choices">
+      <button type="button" class="onboarding-choice" id="choice-set-a">
+        <strong>Getränkeverkauf</strong>
+        <span>Cola, Bier, Kaffee, Snacks …</span>
+      </button>
+      <button type="button" class="onboarding-choice" id="choice-set-b">
+        <strong>Vereinsfest</strong>
+        <span>Bratwurst, Getränke, Kuchen, Tombola …</span>
+      </button>
+      <button type="button" class="onboarding-choice" id="choice-empty">
+        <strong>Leer starten</strong>
+        <span>Keine Beispielprodukte</span>
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Main App ===== -->
+<div id="app" class="app" hidden>
+
+  <header class="topbar">
+    <h1 id="view-title" class="view-title">Kasse</h1>
+    <div id="topbar-extra" class="topbar-extra"></div>
+  </header>
+
+  <main class="views">
+
+    <!-- ---- Kasse ---- -->
+    <section id="view-kasse" class="view active">
+      <div class="category-tabs" id="category-tabs"></div>
+      <div class="product-grid" id="product-grid"></div>
+
+      <div class="cart" id="cart">
+        <div class="cart-header" id="cart-toggle">
+          <span class="cart-count" id="cart-count">0 Artikel</span>
+          <span class="cart-total" id="cart-total">0,00 €</span>
+          <span class="cart-chevron">▲</span>
+        </div>
+        <div class="cart-items" id="cart-items"></div>
+        <button type="button" class="btn btn-primary btn-pay" id="btn-pay" disabled>Bezahlen</button>
+      </div>
+    </section>
+
+    <!-- ---- Produkte ---- -->
+    <section id="view-produkte" class="view">
+      <div class="produkte-toolbar">
+        <button type="button" class="btn btn-secondary" id="btn-scan-product">📷 Scannen</button>
+        <button type="button" class="btn btn-primary" id="btn-add-product">+ Produkt</button>
+      </div>
+      <div class="product-list" id="product-list"></div>
+    </section>
+
+    <!-- ---- Historie ---- -->
+    <section id="view-historie" class="view">
+      <div class="today-summary" id="today-summary">
+        <span class="today-summary-label">Tagesumsatz</span>
+        <span class="today-summary-value" id="today-summary-value">0,00 €</span>
+      </div>
+      <div class="sale-list" id="sale-list"></div>
+    </section>
+
+    <!-- ---- Einstellungen ---- -->
+    <section id="view-einstellungen" class="view">
+      <form class="settings-form" id="settings-form">
+        <label class="field">
+          <span>Geschäftsname</span>
+          <input type="text" id="setting-business-name" placeholder="Meine Kasse" autocomplete="off">
+        </label>
+        <label class="field">
+          <span>Währungssymbol</span>
+          <input type="text" id="setting-currency" placeholder="€" maxlength="3" autocomplete="off">
+        </label>
+      </form>
+
+      <div class="settings-section">
+        <h2>PIN ändern</h2>
+        <form class="settings-form" id="pin-change-form">
+          <label class="field">
+            <span>Aktueller PIN</span>
+            <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" id="pin-current" autocomplete="off">
+          </label>
+          <label class="field">
+            <span>Neuer PIN (4-stellig)</span>
+            <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" id="pin-new" autocomplete="off">
+          </label>
+          <label class="field">
+            <span>Neuer PIN wiederholen</span>
+            <input type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" id="pin-new-repeat" autocomplete="off">
+          </label>
+          <button type="submit" class="btn btn-primary">PIN ändern</button>
+        </form>
+      </div>
+
+      <div class="settings-section">
+        <h2>Daten</h2>
+        <div class="settings-actions">
+          <button type="button" class="btn btn-secondary" id="btn-export">Export (JSON)</button>
+          <button type="button" class="btn btn-secondary" id="btn-import">Import (JSON)</button>
+          <input type="file" id="import-file" accept="application/json" hidden>
+          <button type="button" class="btn btn-secondary" id="btn-reload-demo">Beispieldaten neu laden</button>
+          <button type="button" class="btn btn-danger" id="btn-delete-all">Alle Daten löschen</button>
+        </div>
+      </div>
+
+      <p class="app-version">PoS Kasse · lokal &amp; offline</p>
+    </section>
+
+  </main>
+
+  <nav class="tabbar" id="tabbar">
+    <button type="button" class="tab-btn active" data-view="kasse">
+      <span class="tab-icon">🧾</span><span>Kasse</span>
+    </button>
+    <button type="button" class="tab-btn" data-view="produkte">
+      <span class="tab-icon">📦</span><span>Produkte</span>
+    </button>
+    <button type="button" class="tab-btn" data-view="historie">
+      <span class="tab-icon">📊</span><span>Historie</span>
+    </button>
+    <button type="button" class="tab-btn" data-view="einstellungen">
+      <span class="tab-icon">⚙️</span><span>Einstellungen</span>
+    </button>
+  </nav>
+</div>
+
+<!-- ===== Modal: Product Edit ===== -->
+<div class="modal-overlay" id="modal-product" hidden>
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="product-modal-title">Produkt</h2>
+      <button type="button" class="modal-close" data-close="modal-product">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="product-form">
+        <input type="hidden" id="product-id">
+        <div class="product-image-picker">
+          <img id="product-image-preview" class="product-image-preview" hidden>
+          <div class="product-image-actions">
+            <label class="btn btn-secondary btn-file">
+              📷 Foto aufnehmen
+              <input type="file" id="product-image-input" accept="image/*" capture="environment" hidden>
+            </label>
+            <button type="button" class="btn btn-secondary" id="product-image-remove" hidden>Bild entfernen</button>
+          </div>
+        </div>
+        <label class="field">
+          <span>Name *</span>
+          <input type="text" id="product-name" required autocomplete="off">
+        </label>
+        <label class="field">
+          <span>Preis (€) *</span>
+          <input type="number" id="product-price" inputmode="decimal" step="0.01" min="0" required>
+        </label>
+        <label class="field">
+          <span>Kategorie *</span>
+          <input type="text" id="product-category" list="category-list" required autocomplete="off">
+          <datalist id="category-list"></datalist>
+        </label>
+        <label class="field">
+          <span>Farbe</span>
+          <div class="color-picker" id="color-picker"></div>
+        </label>
+        <label class="field">
+          <span>Barcode (EAN-13, optional)</span>
+          <div class="barcode-field">
+            <input type="text" id="product-barcode" inputmode="numeric" autocomplete="off">
+            <button type="button" class="btn btn-secondary" id="btn-scan-in-form">📷</button>
+          </div>
+        </label>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-danger" id="btn-delete-product" hidden>Löschen</button>
+          <button type="submit" class="btn btn-primary">Speichern</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Modal: Checkout ===== -->
+<div class="modal-overlay" id="modal-checkout" hidden>
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Bezahlen</h2>
+      <button type="button" class="modal-close" data-close="modal-checkout">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="checkout-total">
+        <span>Gesamtsumme</span>
+        <strong id="checkout-total-value">0,00 €</strong>
+      </div>
+      <div class="payment-methods" id="payment-methods">
+        <button type="button" class="payment-method" data-method="bar">💵<span>Bar</span></button>
+        <button type="button" class="payment-method" data-method="karte">💳<span>Karte</span></button>
+        <button type="button" class="payment-method" data-method="sonstiges">🔖<span>Sonstiges</span></button>
+      </div>
+      <div class="cash-input-wrap" id="cash-input-wrap" hidden>
+        <label class="field">
+          <span>Gegebener Betrag</span>
+          <input type="number" id="cash-given" inputmode="decimal" step="0.01" min="0">
+        </label>
+        <div class="change-row">
+          <span>Rückgeld</span>
+          <strong id="change-value">0,00 €</strong>
+        </div>
+        <div class="quick-cash" id="quick-cash"></div>
+      </div>
+      <button type="button" class="btn btn-primary btn-confirm-pay" id="btn-confirm-pay" disabled>Verkauf abschließen</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Modal: Scanner ===== -->
+<div class="modal-overlay" id="modal-scanner" hidden>
+  <div class="modal modal-scanner">
+    <div class="modal-header">
+      <h2>Barcode scannen</h2>
+      <button type="button" class="modal-close" data-close="modal-scanner">✕</button>
+    </div>
+    <div class="modal-body scanner-body">
+      <video id="scanner-video" class="scanner-video" playsinline muted></video>
+      <p id="scanner-status" class="scanner-status">Kamera wird gestartet …</p>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Modal: Sale Detail ===== -->
+<div class="modal-overlay" id="modal-sale-detail" hidden>
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Verkaufsdetails</h2>
+      <button type="button" class="modal-close" data-close="modal-sale-detail">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="sale-detail-content"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-danger" id="btn-delete-sale">Verkauf löschen</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Confirm Dialog ===== -->
+<div class="modal-overlay" id="modal-confirm" hidden>
+  <div class="modal modal-confirm">
+    <div class="modal-body">
+      <p id="confirm-message">Bist du sicher?</p>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" id="confirm-cancel">Abbrechen</button>
+        <button type="button" class="btn btn-danger" id="confirm-ok">Bestätigen</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Toast ===== -->
+<div class="toast" id="toast" hidden></div>
+
+<script src="app.js"></script>
+</body>
+</html>
